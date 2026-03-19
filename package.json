@@ -1,0 +1,16 @@
+{
+  "name": "codex-chat",
+  "version": "0.1.0",
+  "description": "Chat with GPT Codex using your ChatGPT Pro/Plus subscription",
+  "type": "module",
+  "scripts": {
+    "tui": "bun run src/tui.ts",
+    "web": "bun run src/server.ts",
+    "login": "bun run src/tui.ts login",
+    "login:headless": "bun run src/tui.ts login:headless",
+    "logout": "bun run src/tui.ts logout"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
