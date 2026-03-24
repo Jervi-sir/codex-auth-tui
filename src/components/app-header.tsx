@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Box, Text } from "ink"
 import { basename } from "path"
 import { RepoFileStat, RepoSnapshot } from "@/types"
+import { getCharm } from "../charm"
 
 
 export function AppHeader({
@@ -14,10 +15,10 @@ export function AppHeader({
   repoSnapshot: RepoSnapshot
 }) {
   return (
-    <Box marginBottom={1} justifyContent="space-between">
+    <Box justifyContent="space-between">
       <Box>
-        <Text color="cyanBright" bold>codex-chat</Text>
-        <Text dimColor>  Ink terminal client</Text>
+        <Text>{getCharm().apply({ value: " codex-chat ", id: "accent" })}</Text>
+        <Text dimColor>  Ink Wasm Client</Text>
       </Box>
       <Box>
         <Text dimColor>account </Text>

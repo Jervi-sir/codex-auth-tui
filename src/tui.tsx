@@ -14,6 +14,7 @@ import { Box, render, useApp, useInput } from "ink"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { clearTokens, loadTokens, loginBrowser, loginDevice, type TokenStore } from "./auth"
 import { streamChat, type Message } from "./api"
+import { initCharm } from "./charm"
 import { recordSpeechToText } from "./speech"
 import { AppHeader } from "./components/app-header"
 import { ConversationPane } from "./components/conversation-pane"
@@ -404,7 +405,7 @@ function ChatApp({ store }: { store: TokenStore }) {
       <SessionStrip accountLabel={accountLabel} modelLabel={selectedModel.label} status={status} streaming={streaming} />
 
       <Box alignItems="flex-start">
-        <Box flexDirection="column" flexGrow={1} flexBasis="68%" >
+        <Box flexDirection="column" flexGrow={1}  >
           <ConversationPane transcript={visibleTranscript} />
           <PromptPanel
             draft={draft}
@@ -434,6 +435,7 @@ function ChatApp({ store }: { store: TokenStore }) {
 }
 
 async function main() {
+  await initCharm()
   const arg = process.argv[2]
 
   if (arg === "logout") {

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react"
 import { Box, Text } from "ink"
 import { Spinner } from "./spinner"
+import { getCharm } from "../charm"
 
 export function SessionStrip({
   accountLabel,
@@ -14,14 +14,14 @@ export function SessionStrip({
   streaming: boolean
 }) {
   return (
-    <Box marginBottom={1} borderStyle="round" borderColor="gray" borderDimColor paddingX={1}>
-      <Box marginRight={3}>
-        <Text dimColor>Account </Text>
-        <Text color="green">{accountLabel}</Text>
+    <Box borderStyle="round" borderColor="gray" borderDimColor paddingX={1}>
+      <Box>
+        <Text dimColor>Account  </Text>
+        <Text>{getCharm().apply({ value: accountLabel, id: "badge_green" })}</Text>
       </Box>
-      <Box marginRight={3}>
-        <Text dimColor>Model </Text>
-        <Text color="cyan">{modelLabel}</Text>
+      <Box>
+        <Text dimColor>Model  </Text>
+        <Text>{getCharm().apply({ value: modelLabel, id: "badge_cyan" })}</Text>
       </Box>
       <Box>
         <Text dimColor>Status </Text>

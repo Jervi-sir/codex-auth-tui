@@ -16,7 +16,12 @@
     "@types/react": "^19.2.2"
   },
   "dependencies": {
+    "charsm": "^0.2.0",
     "ink": "^6.8.0",
     "react": "^19.2.4"
-  }
+  },
+  "trustedDependencies": [
+    "@makeomatic/ffi-napi",
+    "@makeomatic/ref-napi"
+  ]
 }

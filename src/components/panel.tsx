@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Box, Text } from "ink"
 import { AccentColor } from "@/types"
+import { getCharm } from "../charm"
 
 export function Panel({
   title,
@@ -17,14 +18,14 @@ export function Panel({
     <Box
       flexDirection="column"
       borderStyle="round"
-      borderColor={accent}
+      borderColor={accent === "blue" ? "#7D56F4" : accent === "yellow" ? "#EE6FF8" : accent}
       borderDimColor
       paddingX={1}
       paddingY={0}
       flexGrow={flexGrow}
     >
-      <Box marginBottom={1}>
-        <Text color={accent} bold>{title}</Text>
+      <Box >
+        <Text>{getCharm().apply({ value: " " + title + " ", id: accent === "blue" ? "accent" : "panel_title" })}</Text>
       </Box>
       {children}
     </Box>

@@ -1,5 +1,6 @@
 import { Box, Text } from "ink"
 import type { TranscriptEntry } from "@/types"
+import { getCharm } from "../charm"
 
 export function MessageCard({ entry }: { entry: TranscriptEntry }) {
   const theme =
@@ -12,11 +13,11 @@ export function MessageCard({ entry }: { entry: TranscriptEntry }) {
           : { label: "Info", color: "yellow" as const, border: "yellow" as const }
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.border} borderDimColor paddingX={1} marginBottom={1}>
-      <Box marginBottom={1}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.border} borderDimColor paddingX={1} >
+      <Box >
         <Text color={theme.color}>{theme.label}</Text>
       </Box>
-      <Text>{entry.content || " "}</Text>
+      <Text>{entry.role === "assistant" && entry.content ? getCharm().RenderMD(entry.content, "tokyo-night") : (entry.content || " ")}</Text>
     </Box>
   )
 }

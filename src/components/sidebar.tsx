@@ -22,7 +22,7 @@ export function Sidebar({
   repoSnapshot: RepoSnapshot
 }) {
   return (
-    <Box width={38} flexDirection="column">
+    <Box width={38} flexDirection="column" gap={0}>
       <Panel title="Current Task" accent="blue">
         <Text bold wrap="wrap">{currentTask}</Text>
       </Panel>
@@ -37,13 +37,13 @@ export function Sidebar({
       </Box>
 
       <Box>
-        <Panel title="LSP" accent="green">
+        <Panel title="LSP" accent="green" flexGrow={1}>
           <Text color="green">* typescript</Text>
         </Panel>
       </Box>
 
       <Box>
-        <Panel title={`${filesExpanded ? "v" : ">"} Modified Files`} accent="yellow">
+        <Panel title={`${filesExpanded ? "v" : ">"} Modified Files`} accent="yellow" flexGrow={1}>
           {filesExpanded ? (
             repoSnapshot.files.length === 0 ? (
               <Text dimColor>No local changes</Text>
@@ -66,7 +66,7 @@ export function Sidebar({
       </Box>
 
       <Box>
-        <Panel title="Workspace" accent="gray">
+        <Panel title="Workspace" accent="gray" flexGrow={1}>
           <Text dimColor wrap="truncate-middle">{basename(process.cwd())}:{repoSnapshot.branch}</Text>
           <Text color="green">* codex-chat</Text>
         </Panel>

@@ -22,7 +22,7 @@ export function PromptPanel({
 }) {
   return (
     <Panel title="Prompt" accent={draft.startsWith("/") ? "yellow" : "blue"}>
-      <Box marginBottom={1}>
+      <Box >
         <Text>{draft || (listening ? "Listening to microphone..." : streaming ? "Waiting for response..." : "Type a message")}</Text>
       </Box>
       <Box>
