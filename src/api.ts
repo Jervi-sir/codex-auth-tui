@@ -1,4 +1,4 @@
-import { ensureFreshToken, loadTokens, type TokenStore } from "./auth"
+import { ensureFreshToken, loadTokens, type TokenStore } from "@/auth"
 import { platform, release, arch } from "os"
 
 const CODEX_ENDPOINT = "https://chatgpt.com/backend-api/codex/responses"
@@ -13,6 +13,15 @@ export interface StreamChunk {
   type: "delta" | "done" | "error"
   text?: string
   error?: string
+}
+
+interface ApiErrorBody {
+  error?: {
+    message?: string
+    type?: string
+    param?: string
+    code?: string
+  }
 }
 
 function buildHeaders(store: TokenStore): Headers {
@@ -57,7 +66,7 @@ export async function* streamChat(
   storeOverride?: TokenStore,
 ): AsyncGenerator<StreamChunk> {
   let store = storeOverride ?? (await loadTokens())
-  if (!store) throw new Error("Not authenticated. Run: bun run src/tui.ts login")
+  if (!store) throw new Error("Not authenticated. Run: bun run src/tui.tsx login")
   store = await ensureFreshToken(store)
 
   const res = await fetch(CODEX_ENDPOINT, {
@@ -68,7 +77,7 @@ export async function* streamChat(
 
   if (!res.ok) {
     const body = await res.text()
-    yield { type: "error", error: `HTTP ${res.status}: ${body.slice(0, 300)}` }
+    yield { type: "error", error: formatApiError(res.status, body) }
     return
   }
 
@@ -120,6 +129,44 @@ function extractDelta(event: any): string | null {
   // Chat completions format fallback
   const choice = event.choices?.[0]
   return choice?.delta?.content ?? choice?.text ?? null
+}
+
+function formatApiError(status: number, body: string): string {
+  const parsed = parseApiError(body)
+  const message = parsed?.error?.message?.trim()
+  const type = parsed?.error?.type?.trim()
+  const code = parsed?.error?.code?.trim()
+
+  if (message?.includes("Invalid value: 'input_text'")) {
+    return "ChatGPT rejected the request format for this account or model. This often shows up when your current access is limited or exhausted. Try again later, switch models, or log in again."
+  }
+
+  if (status === 429 || code === "rate_limit_exceeded") {
+    return "You have hit the current usage limit. Wait a bit and try again later."
+  }
+
+  if (status === 401) {
+    return "Your session is no longer valid. Run login again to refresh authentication."
+  }
+
+  if (status === 403) {
+    return "Your account does not currently have access to this request. This can happen when limits are reached or access is restricted."
+  }
+
+  if (message) {
+    const details = [type, code].filter(Boolean).join(" / ")
+    return details ? `${message} (${details})` : message
+  }
+
+  return `Request failed with HTTP ${status}.`
+}
+
+function parseApiError(body: string): ApiErrorBody | null {
+  try {
+    return JSON.parse(body) as ApiErrorBody
+  } catch {
+    return null
+  }
 }
 
 // ── Single-shot helper (for server route) ────────────────────────────────────

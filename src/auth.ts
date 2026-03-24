@@ -14,6 +14,9 @@ export interface TokenStore {
   refresh_token: string
   expires_at: number
   account_id?: string
+  account_email?: string
+  account_name?: string
+  account_username?: string
 }
 
 interface PkceCodes {
@@ -32,6 +35,17 @@ export interface IdTokenClaims {
   chatgpt_account_id?: string
   organizations?: Array<{ id: string }>
   "https://api.openai.com/auth"?: { chatgpt_account_id?: string }
+  email?: string
+  name?: string
+  preferred_username?: string
+  nickname?: string
+}
+
+interface AccountProfile {
+  account_id?: string
+  account_email?: string
+  account_name?: string
+  account_username?: string
 }
 
 // ── Token persistence ────────────────────────────────────────────────────────
@@ -96,17 +110,41 @@ function parseJwtClaims(token: string): IdTokenClaims | undefined {
 }
 
 export function extractAccountId(tokens: TokenResponse): string | undefined {
+  return extractAccountProfile(tokens).account_id
+}
+
+export function extractAccountProfile(tokens: TokenResponse): AccountProfile {
+  const profile: AccountProfile = {}
+
   for (const t of [tokens.id_token, tokens.access_token]) {
     if (!t) continue
     const c = parseJwtClaims(t)
     if (!c) continue
-    const id =
+
+    profile.account_id ||= 
       c.chatgpt_account_id ||
       c["https://api.openai.com/auth"]?.chatgpt_account_id ||
       c.organizations?.[0]?.id
-    if (id) return id
+    profile.account_email ||= c.email
+    profile.account_name ||= c.name
+    profile.account_username ||= c.preferred_username || c.nickname
   }
-  return undefined
+
+  return profile
+}
+
+function createTokenStore(tokens: TokenResponse, previous?: TokenStore): TokenStore {
+  const profile = extractAccountProfile(tokens)
+
+  return {
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expires_at: Date.now() + (tokens.expires_in ?? 3600) * 1000,
+    account_id: profile.account_id ?? previous?.account_id,
+    account_email: profile.account_email ?? previous?.account_email,
+    account_name: profile.account_name ?? previous?.account_name,
+    account_username: profile.account_username ?? previous?.account_username,
+  }
 }
 
 // ── Token exchange & refresh ──────────────────────────────────────────────────
@@ -204,12 +242,7 @@ export async function loginBrowser(): Promise<TokenStore> {
         exchangeCode(code, redirectUri, pkce)
           .then(async (tokens) => {
             server.stop()
-            const store: TokenStore = {
-              access_token: tokens.access_token,
-              refresh_token: tokens.refresh_token,
-              expires_at: Date.now() + (tokens.expires_in ?? 3600) * 1000,
-              account_id: extractAccountId(tokens),
-            }
+            const store = createTokenStore(tokens)
             await saveTokens(store)
             resolve(store)
           })
@@ -272,12 +305,7 @@ export async function loginDevice(): Promise<TokenStore> {
       })
       if (!tokenRes.ok) throw new Error(`Token exchange failed: ${tokenRes.status}`)
       const tokens: TokenResponse = await tokenRes.json()
-      const store: TokenStore = {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expires_at: Date.now() + (tokens.expires_in ?? 3600) * 1000,
-        account_id: extractAccountId(tokens),
-      }
+      const store = createTokenStore(tokens)
       await saveTokens(store)
       return store
     }
@@ -291,12 +319,7 @@ export async function loginDevice(): Promise<TokenStore> {
 export async function ensureFreshToken(store: TokenStore): Promise<TokenStore> {
   if (store.expires_at > Date.now() + 60_000) return store
   const tokens = await refreshAccessToken(store.refresh_token)
-  const updated: TokenStore = {
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token,
-    expires_at: Date.now() + (tokens.expires_in ?? 3600) * 1000,
-    account_id: extractAccountId(tokens) ?? store.account_id,
-  }
+  const updated = createTokenStore(tokens, store)
   await saveTokens(updated)
   return updated
 }

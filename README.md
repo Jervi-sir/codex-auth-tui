@@ -16,7 +16,7 @@ bun install
 
 ## Usage
 
-### Terminal (TUI)
+### Terminal (Ink TUI)
 
 ```bash
 # Start chat (auto-opens browser for login on first run)
@@ -51,7 +51,7 @@ bun run web
 - Full streaming chat in the browser
 - Model switcher in the header
 - Minimal markdown rendering (code blocks, inline code)
-- Session is shared with TUI (same `~/.codex-chat/tokens.json`)
+- Session is shared with the Ink TUI (same `~/.codex-chat/tokens.json`)
 
 ## Authentication flow
 
@@ -78,7 +78,7 @@ Tokens are saved to `~/.codex-chat/tokens.json` and refreshed automatically.
 src/
   auth.ts    OAuth PKCE + device flow, token persistence
   api.ts     Streaming API client → chatgpt.com/backend-api/codex
-  tui.ts     Terminal chat interface
+  tui.tsx    Ink terminal chat interface
   server.ts  Bun HTTP server + inlined React web UI
 ```
 

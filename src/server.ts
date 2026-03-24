@@ -4,11 +4,16 @@
  * Usage: bun run src/server.ts [port]
  */
 
-import { loadTokens, loginBrowser, ensureFreshToken } from "./auth"
-import { chatStream } from "./api"
+import { loadTokens, loginBrowser, ensureFreshToken } from "@/auth"
+import { chatStream } from "@/api"
 import { join } from "path"
 
 const PORT = parseInt(process.argv[2] ?? "3000")
+
+function formatAccountLabel(store: Awaited<ReturnType<typeof loadTokens>>): string {
+  if (!store) return "unknown"
+  return store.account_email ?? store.account_username ?? store.account_name ?? store.account_id ?? "unknown"
+}
 
 // ── Static React app (inlined) ────────────────────────────────────────────────
 
@@ -583,7 +588,7 @@ async function main() {
   if (!store) {
     console.log("\n  No session found. Starting browser login...\n")
     store = await loginBrowser()
-    console.log(`\n  ✓ Logged in! Account: ${store.account_id ?? "unknown"}`)
+    console.log(`\n  ✓ Logged in! Account: ${formatAccountLabel(store)}`)
   }
 
   const server = Bun.serve({
@@ -623,7 +628,13 @@ async function main() {
 
       // Auth status
       if (url.pathname === "/api/auth") {
-        return Response.json({ authenticated: !!store, account_id: store?.account_id })
+        return Response.json({
+          authenticated: !!store,
+          account_id: store?.account_id,
+          account_email: store?.account_email,
+          account_name: store?.account_name,
+          account_username: store?.account_username,
+        })
       }
 
       return new Response("Not found", { status: 404 })
