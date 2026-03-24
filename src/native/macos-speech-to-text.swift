@@ -2,6 +2,19 @@ import AVFoundation
 import Foundation
 import Speech
 
+struct SpeechEvent: Encodable {
+    let type: String
+    let value: Double?
+    let text: String?
+}
+
+func emit(_ event: SpeechEvent) {
+    let encoder = JSONEncoder()
+    guard let data = try? encoder.encode(event) else { return }
+    FileHandle.standardOutput.write(data)
+    FileHandle.standardOutput.write(Data("\n".utf8))
+}
+
 enum DictationError: LocalizedError {
     case recognizerUnavailable
     case speechPermissionDenied
@@ -30,6 +43,7 @@ final class DictationSession {
     private let semaphore = DispatchSemaphore(value: 0)
     private var outcome: Result<String, Error>?
     private var transcript = ""
+    private var lastLevelEmit = CFAbsoluteTimeGetCurrent()
 
     func run() throws -> String {
         try requestPermissions()
@@ -92,6 +106,7 @@ final class DictationSession {
 
         inputNode.removeTap(onBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+            self?.emitLevel(from: buffer)
             self?.request.append(buffer)
         }
 
@@ -117,6 +132,34 @@ final class DictationSession {
                 }
             }
         }
+    }
+
+    private func emitLevel(from buffer: AVAudioPCMBuffer) {
+        let now = CFAbsoluteTimeGetCurrent()
+        if now - lastLevelEmit < 0.05 {
+            return
+        }
+
+        lastLevelEmit = now
+
+        guard let samples = buffer.floatChannelData?[0] else {
+            return
+        }
+
+        let frameCount = Int(buffer.frameLength)
+        if frameCount == 0 {
+            return
+        }
+
+        var sum: Float = 0
+        for index in 0 ..< frameCount {
+            let sample = samples[index]
+            sum += sample * sample
+        }
+
+        let rms = sqrt(sum / Float(frameCount))
+        let normalized = min(max(Double(rms) * 12.0, 0), 1)
+        emit(SpeechEvent(type: "level", value: normalized, text: nil))
     }
 
     private func finishIfNeeded() {
@@ -145,7 +188,7 @@ final class DictationSession {
 do {
     let session = DictationSession()
     let text = try session.run()
-    FileHandle.standardOutput.write(Data(text.utf8))
+    emit(SpeechEvent(type: "result", value: nil, text: text))
 } catch {
     let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     FileHandle.standardError.write(Data(message.utf8))

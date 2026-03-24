@@ -46,6 +46,8 @@ const COMMANDS = [
   { command: "/exit", description: "Quit the terminal app" },
 ] as const
 
+const VOICE_WAVE_BARS = 12
+
 function formatCurrentTask(transcript: TranscriptEntry[]): string {
   const latestUserEntry = [...transcript].reverse().find((entry) => entry.role === "user")
   return latestUserEntry?.content ?? "Waiting for the next prompt"
@@ -130,6 +132,7 @@ function ChatApp({ store }: { store: TokenStore }) {
   const [modelPickerOpen, setModelPickerOpen] = useState(false)
   const [streaming, setStreaming] = useState(false)
   const [listening, setListening] = useState(false)
+  const [voiceLevels, setVoiceLevels] = useState<number[]>(() => new Array(VOICE_WAVE_BARS).fill(0))
   const [status, setStatus] = useState(`Authenticated as ${formatAccountLabel(store)}`)
   const [selectedSuggestion, setSelectedSuggestion] = useState(0)
   const [repoSnapshot, setRepoSnapshot] = useState<RepoSnapshot>(() => readRepoSnapshot())
@@ -190,11 +193,16 @@ function ChatApp({ store }: { store: TokenStore }) {
   const startDictation = async () => {
     if (streaming || listening || modelPickerOpen) return
 
+    setVoiceLevels(new Array(VOICE_WAVE_BARS).fill(0))
     setListening(true)
     setStatus("Listening to microphone")
 
     try {
-      const transcript = await recordSpeechToText()
+      const transcript = await recordSpeechToText({
+        onLevel: (value) => {
+          setVoiceLevels((current) => [...current.slice(-(VOICE_WAVE_BARS - 1)), value])
+        },
+      })
       setDraft((current) => (current ? `${current} ${transcript}` : transcript))
       setStatus("Speech added to composer")
     } catch (error) {
@@ -203,6 +211,7 @@ function ChatApp({ store }: { store: TokenStore }) {
       setStatus("Microphone transcription failed")
     } finally {
       setListening(false)
+      setVoiceLevels((current) => current.map((value) => value * 0.35))
     }
   }
 
@@ -401,6 +410,7 @@ function ChatApp({ store }: { store: TokenStore }) {
             draft={draft}
             streaming={streaming}
             listening={listening}
+            voiceLevels={voiceLevels}
             modelLabel={selectedModel.label}
             suggestions={suggestions}
             selectedSuggestion={selectedSuggestion}

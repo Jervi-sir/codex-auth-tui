@@ -22,6 +22,9 @@ bun install
 # Start chat (auto-opens browser for login on first run)
 bun run tui
 
+# Start chat in watch mode and reload on file changes
+bun run tui:dev
+
 # Force re-login (browser)
 bun run login
 
@@ -40,6 +43,8 @@ bun run logout
 | `/model` | Switch model |
 | `/logout` | Clear session |
 | `Shift+Enter` | Newline |
+
+`bun run tui:dev` uses Bun watch mode, so changes under `src/` restart the TUI automatically.
 
 ### Web UI
 

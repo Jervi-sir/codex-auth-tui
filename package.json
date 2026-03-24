@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "tui": "bun run src/tui.tsx",
+    "tui:dev": "bun --watch run src/tui.tsx",
     "web": "bun run src/server.ts",
     "login": "bun run src/tui.tsx login",
     "login:headless": "bun run src/tui.tsx login:headless",

@@ -1,6 +1,7 @@
 import { Box, Text } from "ink"
 import type { CommandSuggestion } from "@/types"
 import { Panel } from "./panel"
+import { VoiceWave } from "./voice-wave"
 
 export function PromptPanel({
   draft,
@@ -9,6 +10,7 @@ export function PromptPanel({
   suggestions,
   selectedSuggestion,
   listening,
+  voiceLevels,
 }: {
   draft: string
   streaming: boolean
@@ -16,6 +18,7 @@ export function PromptPanel({
   suggestions: CommandSuggestion[]
   selectedSuggestion: number
   listening: boolean
+  voiceLevels: number[]
 }) {
   return (
     <Panel title="Prompt" accent={draft.startsWith("/") ? "yellow" : "blue"}>
@@ -29,6 +32,9 @@ export function PromptPanel({
       <Box marginTop={1}>
         <Text color={listening ? "red" : "gray"}>{listening ? "* mic live" : "* mic ready"}</Text>
         <Text dimColor>  ctrl+r dictate  /mic speech to text</Text>
+      </Box>
+      <Box marginTop={1}>
+        <VoiceWave levels={voiceLevels} listening={listening} />
       </Box>
       {suggestions.length > 0 ? (
         <Box marginTop={1} flexDirection="column">
